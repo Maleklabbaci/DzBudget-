@@ -3,7 +3,7 @@ import { Question, Language } from './types';
 
 export const TRANSLATIONS = {
   fr: {
-    appTitle: "DzBudget",
+    appTitle: "CHAHRYTI",
     appSubtitle: "Conseiller financier Algérie",
     loginTitle: "Connexion",
     loginEmail: "Email",
@@ -25,15 +25,15 @@ export const TRANSLATIONS = {
     expiryDate: "Expire le",
     logout: "Déconnexion",
     pausedTitle: "Accès Suspendu",
-    pausedMessage: "Votre abonnement à DzBudget est actuellement suspendu ou expiré. Veuillez renouveler votre accès mensuel pour continuer.",
-    pausedContact: "Support technique : support@dzbudget.dz",
+    pausedMessage: "Votre abonnement à CHAHRYTI est actuellement suspendu ou expiré. Veuillez renouveler votre accès mensuel pour continuer.",
+    pausedContact: "Support technique : support@chahryti.dz",
     renewBtn: "Renouveler (Simuler Paiement)",
     introTitle: "Maitrisez votre salaire en DZD",
     introDesc: "Je vais te poser quelques questions rapides pour comprendre ta situation. Ensuite je te proposerai un plan de budget adapté et on pourra suivre tes dépenses ensemble.",
     startBtn: "1) Oui, on commence",
     laterBtn: "2) Non, plus tard",
     stepQuestionnaire: "Étape 2: Questionnaire",
-    questionProgress: "Question",
+    questionProgress: "Séquence",
     valider: "Valider",
     suivant: "Suivant",
     planTitle: "Votre Plan de Budget",
@@ -73,7 +73,7 @@ export const TRANSLATIONS = {
     backToTracker: "Retour au Suivi",
     gap: "Écart",
     usage: "Usage",
-    aiCoachTitle: "Coach IA DzAdvisor",
+    aiCoachTitle: "Coach IA ChahryAdvisor",
     aiCoachSubtitle: "Pose-moi une question sur ton argent",
     aiPlaceholder: "Ex: Comment réduire mon budget nourriture ?",
     aiSuggest1: "Analyse mon budget",
@@ -82,7 +82,7 @@ export const TRANSLATIONS = {
     aiThinking: "Analyse en cours..."
   },
   ar: {
-    appTitle: "ميزانيتي",
+    appTitle: "شهريتي",
     appSubtitle: "مستشارك المالي في الجزائر",
     loginTitle: "تسجيل الدخول",
     loginEmail: "البريد الإلكتروني",
@@ -104,15 +104,15 @@ export const TRANSLATIONS = {
     expiryDate: "تنتهي في",
     logout: "خروج",
     pausedTitle: "الحساب معطل",
-    pausedMessage: "اشتراكك in تطبيق 'ميزانيتي' معطل حاليًا أو انتهت صلاحيته. يرجى تجديد اشتراكك الشهري للمتابعة.",
-    pausedContact: "الدعم الفني: support@dzbudget.dz",
+    pausedMessage: "اشتراكك في تطبيق 'شهريتي' معطل حاليًا أو انتهت صلاحيته. يرجى تجديد اشتراكك الشهري للمتابعة.",
+    pausedContact: "الدعم الفني: support@chahryti.dz",
     renewBtn: "تجديد (محاكاة الدفع)",
     introTitle: "تحكم في راتبك بالدينار الجزائري",
     introDesc: "سأطرح عليك بعض الأسئلة السريعة لفهم وضعك. بعد ذلك، سأقترح عليك خطة ميزانية مناسبة ويمكننا تتبع نفقاتك معًا.",
     startBtn: "1) نعم، لنبدأ",
-    laterBtn: "2) ليس الآن",
+    laterBtn: "ليس الآن",
     stepQuestionnaire: "المرحلة 2: الاستبيان",
-    questionProgress: "سؤال",
+    questionProgress: "التسلسل",
     valider: "تأكيد",
     suivant: "التالي",
     planTitle: "خطة ميزانيتك",
@@ -152,7 +152,7 @@ export const TRANSLATIONS = {
     backToTracker: "العودة للمتابعة",
     gap: "الفارق",
     usage: "الاستهلاك",
-    aiCoachTitle: "المستشار الذكي DzAdvisor",
+    aiCoachTitle: "المستشار الذكي ChahryAdvisor",
     aiCoachSubtitle: "اسألني أي سؤال عن أموالك",
     aiPlaceholder: "مثال: كيف أقلل مصاريف الأكل؟",
     aiSuggest1: "حلل ميزانيتي",
@@ -163,6 +163,15 @@ export const TRANSLATIONS = {
 };
 
 export const QUESTIONS: Question[] = [
+  {
+    id: 0,
+    text: { fr: "Commençons ! Es-tu un homme ou une femme ?", ar: "لنبدأ! هل أنت رجل أم امرأة؟" },
+    type: 'choice',
+    options: [
+      { label: { fr: "Un homme", ar: "رجل" }, value: 1 },
+      { label: { fr: "Une femme", ar: "امرأة" }, value: 2 }
+    ]
+  },
   {
     id: 1,
     text: { fr: "Dans quelle zone tu vis principalement ?", ar: "في أي منطقة تسكن حاليا؟" },

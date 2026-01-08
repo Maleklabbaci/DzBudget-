@@ -1,13 +1,13 @@
 
 export type Language = 'fr' | 'ar';
-
+export type Gender = 'man' | 'woman';
 export type UserRole = 'user' | 'admin';
-
 export type SubscriptionStatus = 'active' | 'paused' | 'expired';
 
 export interface User {
   id: string;
   email: string;
+  password?: string; // Ajout du mot de passe
   name: string;
   role: UserRole;
   subscriptionStatus: SubscriptionStatus;
@@ -54,6 +54,7 @@ export interface Expense {
 
 export interface UserData {
   answers: Record<number, any>;
+  gender?: Gender;
   salary: number;
   otherIncome: number;
   budgetPlan: BudgetCategory[];
