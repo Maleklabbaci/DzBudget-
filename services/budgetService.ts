@@ -2,13 +2,8 @@
 import { UserData, BudgetCategory } from '../types';
 
 export const calculateBudget = (userData: UserData): BudgetCategory[] => {
-  const salary = userData.salary || 0;
-  const otherIncome = userData.otherIncome || 0;
-  const totalIncome = salary + otherIncome;
-  
-  if (totalIncome <= 0) return [];
-
-  const answers = userData.answers || {};
+  const totalIncome = userData.salary + userData.otherIncome;
+  const answers = userData.answers;
 
   // Default percentages
   let config = {
@@ -42,7 +37,7 @@ export const calculateBudget = (userData: UserData): BudgetCategory[] => {
 
   // 3. Adjust for Kids/Education (Question 12 and 3)
   const specialExpenses = (answers[12] as number[]) || [];
-  if (specialExpenses.includes(1) || specialExpenses.includes(2) || (answers[3] && answers[3] > 1)) {
+  if (specialExpenses.includes(1) || specialExpenses.includes(2) || answers[3] > 1) {
     config.education = 0.12;
     config.savings -= 0.06;
     config.leisure -= 0.06;
@@ -62,7 +57,7 @@ export const calculateBudget = (userData: UserData): BudgetCategory[] => {
   }
 
   // 6. Adjust for Debt (Question 10/11)
-  if (answers[10] && answers[10] !== 1) {
+  if (answers[10] !== 1) {
     let debtRatio = 0.10;
     if (answers[11] === 2) debtRatio = 0.20;
     if (answers[11] === 3) debtRatio = 0.35;
@@ -83,19 +78,17 @@ export const calculateBudget = (userData: UserData): BudgetCategory[] => {
 
   // Ensure total is 1.0 (Normalization)
   const totalWeight = Object.values(config).reduce((a, b) => a + b, 0);
-  const safeWeight = totalWeight > 0 ? totalWeight : 1;
-
   const categories: BudgetCategory[] = [
-    { id: 'logement', name: { fr: 'Logement', ar: 'السكن' }, budgeted: (config.housing / safeWeight) * totalIncome, spent: 0 },
-    { id: 'nourriture', name: { fr: 'Nourriture & Hygiène', ar: 'الغذاء والنظافة' }, budgeted: (config.food / safeWeight) * totalIncome, spent: 0 },
-    { id: 'transport', name: { fr: 'Transport', ar: 'النقل' }, budgeted: (config.transport / safeWeight) * totalIncome, spent: 0 },
-    { id: 'factures', name: { fr: 'Factures & Abonnements', ar: 'الفواتير والاشتراكات' }, budgeted: (config.utilities / safeWeight) * totalIncome, spent: 0 },
-    { id: 'education', name: { fr: 'Enfants & Éducation', ar: 'الأطفال والتعليم' }, budgeted: (config.education / safeWeight) * totalIncome, spent: 0 },
-    { id: 'sante', name: { fr: 'Santé', ar: 'الصحة' }, budgeted: (config.health / safeWeight) * totalIncome, spent: 0 },
-    { id: 'famille', name: { fr: 'Aide à la Famille', ar: 'مساعدة العائلة' }, budgeted: (config.familyHelp / safeWeight) * totalIncome, spent: 0 },
-    { id: 'loisirs', name: { fr: 'Loisirs & Sorties', ar: 'الترفيه والخرجات' }, budgeted: (config.leisure / safeWeight) * totalIncome, spent: 0 },
-    { id: 'dettes', name: { fr: 'Dettes & Crédits', ar: 'الديون والقروض' }, budgeted: (config.debt / safeWeight) * totalIncome, spent: 0 },
-    { id: 'epargne', name: { fr: 'Épargne & Projets', ar: 'الادخار والمشاريع' }, budgeted: (config.savings / safeWeight) * totalIncome, spent: 0 }
+    { id: 'logement', name: { fr: 'Logement', ar: 'السكن' }, budgeted: (config.housing / totalWeight) * totalIncome, spent: 0 },
+    { id: 'nourriture', name: { fr: 'Nourriture & Hygiène', ar: 'الغذاء والنظافة' }, budgeted: (config.food / totalWeight) * totalIncome, spent: 0 },
+    { id: 'transport', name: { fr: 'Transport', ar: 'النقل' }, budgeted: (config.transport / totalWeight) * totalIncome, spent: 0 },
+    { id: 'factures', name: { fr: 'Factures & Abonnements', ar: 'الفواتير والاشتراكات' }, budgeted: (config.utilities / totalWeight) * totalIncome, spent: 0 },
+    { id: 'education', name: { fr: 'Enfants & Éducation', ar: 'الأطفال والتعليم' }, budgeted: (config.education / totalWeight) * totalIncome, spent: 0 },
+    { id: 'sante', name: { fr: 'Santé', ar: 'الصحة' }, budgeted: (config.health / totalWeight) * totalIncome, spent: 0 },
+    { id: 'famille', name: { fr: 'Aide à la Famille', ar: 'مساعدة العائلة' }, budgeted: (config.familyHelp / totalWeight) * totalIncome, spent: 0 },
+    { id: 'loisirs', name: { fr: 'Loisirs & Sorties', ar: 'الترفيه والخرجات' }, budgeted: (config.leisure / totalWeight) * totalIncome, spent: 0 },
+    { id: 'dettes', name: { fr: 'Dettes & Crédits', ar: 'الديون والقروض' }, budgeted: (config.debt / totalWeight) * totalIncome, spent: 0 },
+    { id: 'epargne', name: { fr: 'Épargne & Projets', ar: 'الادخار والمشاريع' }, budgeted: (config.savings / totalWeight) * totalIncome, spent: 0 }
   ];
 
   return categories.filter(c => c.budgeted > 0);
