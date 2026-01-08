@@ -48,12 +48,12 @@ const App: React.FC = () => {
     expenses: []
   });
 
-  const t = TRANSLATIONS[lang];
+  const t = TRANSLATIONS[lang] || TRANSLATIONS['fr'];
   const theme = userData.gender === 'woman' ? 'pink' : 'emerald';
 
   const reconcileSubscriptions = useCallback((usersList: User[]) => {
     const now = new Date();
-    return usersList.map(u => {
+    return (usersList || []).map(u => {
       if (u.role === 'admin') return u;
       const expiry = new Date(u.subscriptionExpiry);
       if (now > expiry && u.subscriptionStatus === 'active') {
@@ -90,7 +90,7 @@ const App: React.FC = () => {
 
   const handleUpdateUser = (userId: string, updates: Partial<User>) => {
     setAllUsers(prev => {
-      const newList = prev.map(u => u.id === userId ? { ...u, ...updates } : u);
+      const newList = (prev || []).map(u => u.id === userId ? { ...u, ...updates } : u);
       return reconcileSubscriptions(newList);
     });
   };
@@ -100,7 +100,7 @@ const App: React.FC = () => {
     expiry.setMonth(expiry.getMonth() + newUser.durationMonths);
     
     const user: User = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: Math.random().toString(36).substring(2, 11),
       name: newUser.name,
       email: newUser.email,
       password: newUser.password,
@@ -109,12 +109,12 @@ const App: React.FC = () => {
       subscriptionExpiry: expiry.toISOString()
     };
 
-    setAllUsers(prev => [...prev, user]);
+    setAllUsers(prev => [...(prev || []), user]);
   };
 
   const handleSimulateTime = () => {
     setAllUsers(prev => {
-      const newList = prev.map(u => {
+      const newList = (prev || []).map(u => {
         if (u.role === 'admin') return u;
         const currentExpiry = new Date(u.subscriptionExpiry);
         currentExpiry.setMonth(currentExpiry.getMonth() - 1);
@@ -162,16 +162,16 @@ const App: React.FC = () => {
 
     setUserData(prev => {
       let updatedCat: BudgetCategory | undefined;
-      const updatedPlan = prev.budgetPlan.map(cat => {
+      const updatedPlan = (prev.budgetPlan || []).map(cat => {
         if (cat.id === categoryId) {
-          updatedCat = { ...cat, spent: cat.spent + amount };
+          updatedCat = { ...cat, spent: (cat.spent || 0) + amount };
           return updatedCat;
         }
         return cat;
       });
 
       if (updatedCat) {
-        const ratio = updatedCat.spent / updatedCat.budgeted;
+        const ratio = updatedCat.spent / (updatedCat.budgeted || 1);
         let newNotif: BudgetNotification | null = null;
         if (ratio >= 1.0) {
           newNotif = {
@@ -193,36 +193,36 @@ const App: React.FC = () => {
           };
         }
         if (newNotif) {
-          setNotifications(prevNotifs => [newNotif!, ...prevNotifs.filter(n => n.categoryId !== categoryId)]);
+          setNotifications(prevNotifs => [newNotif!, ...(prevNotifs || []).filter(n => n.categoryId !== categoryId)]);
         }
       }
       return { 
         ...prev, 
         budgetPlan: updatedPlan, 
-        expenses: [newExpense, ...prev.expenses] 
+        expenses: [newExpense, ...(prev.expenses || [])] 
       };
     });
   };
 
   const handleDeleteExpense = (expenseId: string) => {
     setUserData(prev => {
-      const expenseToDelete = prev.expenses.find(e => e.id === expenseId);
+      const expenseToDelete = (prev.expenses || []).find(e => e.id === expenseId);
       if (!expenseToDelete) return prev;
 
-      const updatedPlan = prev.budgetPlan.map(cat => {
+      const updatedPlan = (prev.budgetPlan || []).map(cat => {
         if (cat.id === expenseToDelete.categoryId) {
-          return { ...cat, spent: Math.max(0, cat.spent - expenseToDelete.amount) };
+          return { ...cat, spent: Math.max(0, (cat.spent || 0) - expenseToDelete.amount) };
         }
         return cat;
       });
 
-      const updatedExpenses = prev.expenses.filter(e => e.id !== expenseId);
+      const updatedExpenses = (prev.expenses || []).filter(e => e.id !== expenseId);
       return { ...prev, budgetPlan: updatedPlan, expenses: updatedExpenses };
     });
   };
 
-  const totalIncome = userData.salary + userData.otherIncome;
-  const totalSpent = userData.budgetPlan.reduce((s, c) => s + c.spent, 0);
+  const totalIncome = (userData.salary || 0) + (userData.otherIncome || 0);
+  const totalSpent = (userData.budgetPlan || []).reduce((s, c) => s + (c.spent || 0), 0);
 
   const themeText = theme === 'pink' ? 'text-pink-600' : 'text-emerald-600';
   const themeBg = theme === 'pink' ? 'bg-pink-600' : 'bg-emerald-600';
@@ -268,7 +268,7 @@ const App: React.FC = () => {
       </header>
 
       <main className="flex-grow container mx-auto px-5 py-6 max-w-5xl">
-        <div key={`${step}-${userData.gender}`} className="animate-slide-up">
+        <div key={`${step}-${userData.gender || 'unknown'}`} className="animate-slide-up">
           {step === AppStep.LOGIN && <Login lang={lang} onLogin={handleLogin} error={loginError} />}
 
           {step === AppStep.ADMIN && (
@@ -305,7 +305,7 @@ const App: React.FC = () => {
               <p className="text-slate-500 font-medium leading-relaxed mb-10">{t.introDesc}</p>
               <div className="space-y-4">
                 <button onClick={handleStart} className={`w-full py-5 ${themeBg} text-white rounded-3xl font-black text-xl transition-all shadow-xl ${themeShadow} active:scale-95`}>{t.startBtn}</button>
-                <button className="w-full py-5 text-slate-400 font-bold hover:text-slate-600 transition-colors">{t.laterBtn}</button>
+                <button onClick={handleLogout} className="w-full py-5 text-slate-400 font-bold hover:text-slate-600 transition-colors">{t.laterBtn}</button>
               </div>
             </div>
           )}
@@ -319,15 +319,15 @@ const App: React.FC = () => {
           {(step === AppStep.BUDGET_PLAN || step === AppStep.TRACKER) && (
             <div className="space-y-6">
               <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
-                <div className="flex-shrink-0 px-4 py-3 bg-white rounded-2xl border border-slate-200 shadow-sm animate-pop-in" style={{animationDelay: '0s'}}>
+                <div className="flex-shrink-0 px-4 py-3 bg-white rounded-2xl border border-slate-200 shadow-sm animate-pop-in">
                   <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none mb-1">{t.income}</p>
                   <p className="font-black text-slate-900 whitespace-nowrap">{formatCurrency(totalIncome, lang)}</p>
                 </div>
-                <div className="flex-shrink-0 px-4 py-3 bg-white rounded-2xl border border-slate-200 shadow-sm animate-pop-in" style={{animationDelay: '0.1s'}}>
+                <div className="flex-shrink-0 px-4 py-3 bg-white rounded-2xl border border-slate-200 shadow-sm animate-pop-in">
                   <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none mb-1">{t.spent}</p>
                   <p className="font-black text-rose-600 whitespace-nowrap">{formatCurrency(totalSpent, lang)}</p>
                 </div>
-                <div className={`flex-shrink-0 px-4 py-3 ${themeBg} rounded-2xl shadow-lg ${themeShadow} animate-pop-in`} style={{animationDelay: '0.2s'}}>
+                <div className={`flex-shrink-0 px-4 py-3 ${themeBg} rounded-2xl shadow-lg ${themeShadow} animate-pop-in`}>
                   <p className={`text-[10px] font-black uppercase ${theme === 'pink' ? 'text-pink-100' : 'text-emerald-100'} tracking-widest leading-none mb-1`}>{t.remaining}</p>
                   <p className="font-black text-white whitespace-nowrap">{formatCurrency(totalIncome - totalSpent, lang)}</p>
                 </div>
@@ -339,9 +339,9 @@ const App: React.FC = () => {
                     <div key={n.id} className={`p-4 rounded-3xl border-2 flex items-center justify-between animate-pop-in ${n.type === 'danger' ? 'bg-rose-50 border-rose-100 text-rose-800' : 'bg-amber-50 border-amber-100 text-amber-800'}`}>
                       <p className="text-sm font-bold flex items-center gap-2">
                         <span className="text-xl">{n.type === 'danger' ? '🚨' : '⚠️'}</span>
-                        <span>{n.message[lang]} {n.categoryName?.[lang] || ''}</span>
+                        <span>{n.message?.[lang] || ''} {n.categoryName?.[lang] || ''}</span>
                       </p>
-                      <button onClick={() => setNotifications(prev => prev.filter(x => x.id !== n.id))} className="w-8 h-8 rounded-full hover:bg-black/5 flex items-center justify-center">✕</button>
+                      <button onClick={() => setNotifications(prev => (prev || []).filter(x => x.id !== n.id))} className="w-8 h-8 rounded-full hover:bg-black/5 flex items-center justify-center">✕</button>
                     </div>
                   ))}
                 </div>
@@ -350,8 +350,8 @@ const App: React.FC = () => {
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-5 space-y-6 order-1 lg:order-2">
                   <ExpenseTracker 
-                    categories={userData.budgetPlan} 
-                    expenses={userData.expenses}
+                    categories={userData.budgetPlan || []} 
+                    expenses={userData.expenses || []}
                     lang={lang} 
                     onAddExpense={handleAddExpense} 
                     onDeleteExpense={handleDeleteExpense}
@@ -363,8 +363,8 @@ const App: React.FC = () => {
                   <div className="hidden lg:block bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
                     <h3 className="font-black text-slate-900 mb-6 text-xs uppercase tracking-widest text-center">{t.visualSummary}</h3>
                     <div className="space-y-5">
-                      {userData.budgetPlan.map(cat => {
-                        const ratio = cat.budgeted > 0 ? (cat.spent / cat.budgeted) * 100 : 0;
+                      {(userData.budgetPlan || []).map(cat => {
+                        const ratio = cat.budgeted > 0 ? ((cat.spent || 0) / cat.budgeted) * 100 : 0;
                         return (
                           <div key={cat.id}>
                             <div className="flex justify-between text-xs font-black mb-1.5 px-1">
@@ -398,7 +398,7 @@ const App: React.FC = () => {
                     </button>
                   </div>
                   
-                  <BudgetTable categories={userData.budgetPlan} lang={lang} gender={userData.gender} />
+                  <BudgetTable categories={userData.budgetPlan || []} lang={lang} gender={userData.gender} />
                   
                   <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm relative overflow-hidden animate-pop-in">
                     <div className={`absolute top-0 right-0 w-24 h-24 ${themeBgLight} rounded-full -mr-12 -mt-12`}></div>
@@ -406,9 +406,9 @@ const App: React.FC = () => {
                       <span className={`${themeText}`}>★</span> {t.adviceTitle}
                     </h4>
                     <p className="text-slate-600 text-sm leading-relaxed relative z-10 font-medium">
-                      {userData.answers[14] === 1 
+                      {userData.answers?.[14] === 1 
                         ? (lang === 'fr' ? "Nous avons maximisé ton épargne car tu as choisi une gestion stricte. Priorise le remplissage de ton fonds de sécurité avant les extras." : "لقد قمنا بزيادة ادخارك لأنك اخترت تسييرًا صارمًا. أعط الأولوية لملء صندوق الأمان الخاص بك قبل الكماليات.")
-                        : userData.answers[4] === 3 
+                        : userData.answers?.[4] === 3 
                           ? (lang === 'fr' ? "L'absence de loyer est une opportunité énorme ! On a boosté l'épargne projet et l'aide à la famille." : "عدم وجود كراء هو فرصة كبيرة! لقد عززنا ادخار المشروع ومساعدة العائلة.")
                           : (lang === 'fr' ? "Ton budget est équilibré. Garde un œil sur la catégorie Nourriture, les prix peuvent varier rapidement dans ta région." : "ميزانيتك متمتوازنة. راقب فئة الطعام، فالأسعار قد تتغير بسرعة في منطقتك.")
                       }
