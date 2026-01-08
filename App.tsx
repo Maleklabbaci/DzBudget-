@@ -5,7 +5,6 @@ import Questionnaire from './components/Questionnaire';
 import BudgetTable from './components/BudgetTable';
 import ExpenseTracker from './components/ExpenseTracker';
 import MonthSummary from './components/MonthSummary';
-import AICoach from './components/AICoach';
 import Login from './components/Login';
 import AdminDashboard from './components/AdminDashboard';
 import { calculateBudget } from './services/budgetService';
@@ -358,9 +357,7 @@ const App: React.FC = () => {
                     gender={userData.gender} 
                   />
                   
-                  <AICoach userData={userData} lang={lang} />
-                  
-                  <div className="hidden lg:block bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+                  <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
                     <h3 className="font-black text-slate-900 mb-6 text-xs uppercase tracking-widest text-center">{t.visualSummary}</h3>
                     <div className="space-y-5">
                       {(userData.budgetPlan || []).map(cat => {
