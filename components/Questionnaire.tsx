@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { QUESTIONS, TRANSLATIONS } from '../constants';
-import { Question, Language } from '../types';
+import { Language } from '../types';
 
 interface QuestionnaireProps {
   lang: Language;
@@ -17,7 +17,6 @@ const Questionnaire: React.FC<QuestionnaireProps> = ({ lang, onComplete }) => {
   const t = TRANSLATIONS[lang];
   const currentQuestion = QUESTIONS[currentIdx];
   
-  // Dynamic theme detection for the questionnaire
   const isWoman = answers[0] === 2;
   const themeText = isWoman ? 'text-pink-600' : 'text-emerald-600';
   const themeBg = isWoman ? 'bg-pink-600' : 'bg-emerald-600';
@@ -44,6 +43,20 @@ const Questionnaire: React.FC<QuestionnaireProps> = ({ lang, onComplete }) => {
     onComplete(updatedAnswers);
   };
 
+  const handleBack = () => {
+    if (currentIdx === 0) return;
+    
+    let prevIdx = currentIdx - 1;
+    while (prevIdx >= 0) {
+      const prevQ = QUESTIONS[prevIdx];
+      if (!prevQ.condition || prevQ.condition(answers)) {
+        setCurrentIdx(prevIdx);
+        return;
+      }
+      prevIdx--;
+    }
+  };
+
   const toggleMulti = (val: number) => {
     if (multiInput.includes(val)) {
       setMultiInput(multiInput.filter(v => v !== val));
@@ -53,12 +66,16 @@ const Questionnaire: React.FC<QuestionnaireProps> = ({ lang, onComplete }) => {
   };
 
   return (
-    <div className="max-w-xl mx-auto animate-slide-up">
+    <div className="max-w-xl mx-auto animate-slide-up pb-10">
       <div className="mb-8">
         <div className="flex justify-between items-center mb-3 px-1">
-          <span className={`text-[10px] font-black uppercase tracking-widest ${themeText}`}>
-            {t.stepQuestionnaire}
-          </span>
+          <button 
+            onClick={handleBack}
+            disabled={currentIdx === 0}
+            className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${currentIdx === 0 ? 'text-slate-300' : themeText}`}
+          >
+            {lang === 'ar' ? '← العودة' : '← Retour'}
+          </button>
           <span className="text-[10px] font-black text-slate-400">
             {currentIdx + 1} / {QUESTIONS.length}
           </span>
@@ -72,7 +89,7 @@ const Questionnaire: React.FC<QuestionnaireProps> = ({ lang, onComplete }) => {
       </div>
 
       <div key={currentIdx} className="bg-white p-6 sm:p-10 rounded-[2.5rem] shadow-xl border border-slate-100 animate-slide-in-right">
-        <h2 className="text-2xl font-black text-slate-900 mb-8 leading-tight text-center sm:text-left">
+        <h2 className="text-2xl font-black text-slate-900 mb-8 leading-tight text-center sm:text-left rtl:text-right">
           {currentQuestion.text[lang]}
         </h2>
 
@@ -105,7 +122,7 @@ const Questionnaire: React.FC<QuestionnaireProps> = ({ lang, onComplete }) => {
                 className={`w-full p-6 bg-slate-50 rounded-3xl border-2 border-transparent focus:${themeBorder} focus:bg-white focus:outline-none text-3xl font-black text-center`}
                 autoFocus
               />
-              <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-slate-300 pointer-events-none">DZD</span>
+              <span className={`absolute ${lang === 'ar' ? 'left-6' : 'right-6'} top-1/2 -translate-y-1/2 font-black text-slate-300 pointer-events-none`}>DZD</span>
             </div>
             <button
               onClick={() => handleNext(Number(numInput) || 0)}

@@ -72,7 +72,14 @@ export const TRANSLATIONS = {
     advicePattern: "Analyse des dépenses",
     backToTracker: "Retour au Suivi",
     gap: "Écart",
-    usage: "Usage"
+    usage: "Usage",
+    aiCoachTitle: "Coach IA ChahryAdvisor",
+    aiCoachSubtitle: "Pose-moi une question sur ton argent",
+    aiPlaceholder: "Ex: Comment réduire mon budget nourriture ?",
+    aiSuggest1: "Analyse mon budget",
+    aiSuggest2: "Astuce épargne Algérie",
+    aiSuggest3: "Gérer un imprévu",
+    aiThinking: "Analyse en cours..."
   },
   ar: {
     appTitle: "شهريتي",
@@ -144,7 +151,14 @@ export const TRANSLATIONS = {
     advicePattern: "تحليل المصاريف",
     backToTracker: "العودة للمتابعة",
     gap: "الفارق",
-    usage: "الاستهلاك"
+    usage: "الاستهلاك",
+    aiCoachTitle: "المستشار الذكي ChahryAdvisor",
+    aiCoachSubtitle: "اسألني أي سؤال عن أموالك",
+    aiPlaceholder: "مثال: كيف أقلل مصاريف الأكل؟",
+    aiSuggest1: "حلل ميزانيتي",
+    aiSuggest2: "نصيحة ادخار في الجزائر",
+    aiSuggest3: "تسيير طارئ",
+    aiThinking: "جاري التحليل..."
   }
 };
 

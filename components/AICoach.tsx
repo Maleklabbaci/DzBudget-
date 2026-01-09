@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { UserData, Language } from '../types';
 import { TRANSLATIONS, formatCurrency } from '../constants';
 
@@ -51,22 +51,24 @@ const AICoach: React.FC<AICoachProps> = ({ userData, lang }) => {
         RÈGLES :
         1. Sois très concret et adapté à l'Algérie (prix du marché, contexte local, Dara, épargne projets comme voiture ou mariage).
         2. Ne donne pas de conseils génériques. Analyse les chiffres fournis.
-        3. Réponds en ${lang === 'fr' ? 'français clair' : 'arabe algérien (Darja) écrit simplement ou arabe standard'}.
+        3. Réponds en ${lang === 'fr' ? 'français clair' : 'arabe algérien (Darja) ou arabe standard'}.
         4. Si l'utilisateur a dépassé un budget, propose une solution pour compenser.
         5. Garde une réponse courte et motivante (max 4-5 phrases).
+        6. Utilise des emojis pour rendre le message amical.
 
         QUESTION DE L'UTILISATEUR : ${textToAsk}
       `;
 
-      const result = await ai.models.generateContent({
+      const result: GenerateContentResponse = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: prompt,
       });
 
       setResponse(result.text || "Désolé, je n'ai pas pu analyser cela.");
+      setQuery('');
     } catch (error) {
       console.error(error);
-      setResponse("Une erreur est survenue lors de la connexion avec DzAdvisor.");
+      setResponse("Une erreur est survenue lors de la connexion avec DzAdvisor. Vérifie ta connexion internet.");
     } finally {
       setLoading(false);
     }
@@ -88,7 +90,10 @@ const AICoach: React.FC<AICoachProps> = ({ userData, lang }) => {
 
       <div className="space-y-4">
         {response && (
-          <div className={`${themeBgNotif} p-4 rounded-2xl text-sm font-medium ${themeTextNotif} border ${themeBorderNotif} leading-relaxed`}>
+          <div className={`${themeBgNotif} p-4 rounded-2xl text-sm font-medium ${themeTextNotif} border ${themeBorderNotif} leading-relaxed animate-pop-in relative`}>
+            <button onClick={() => setResponse(null)} className="absolute top-2 right-2 text-slate-400 hover:text-slate-600">
+               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
             {response}
           </div>
         )}
@@ -96,19 +101,22 @@ const AICoach: React.FC<AICoachProps> = ({ userData, lang }) => {
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
           <button 
             onClick={() => askAI(t.aiSuggest1)}
-            className={`flex-shrink-0 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-black text-slate-600 hover:${themeBgNotif} hover:${themeBorderNotif} transition-all uppercase tracking-tighter`}
+            disabled={loading}
+            className={`flex-shrink-0 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-black text-slate-600 hover:${themeBgNotif} hover:${themeBorderNotif} transition-all uppercase tracking-tighter disabled:opacity-50`}
           >
             🔍 {t.aiSuggest1}
           </button>
           <button 
             onClick={() => askAI(t.aiSuggest2)}
-            className={`flex-shrink-0 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-black text-slate-600 hover:${themeBgNotif} hover:${themeBorderNotif} transition-all uppercase tracking-tighter`}
+            disabled={loading}
+            className={`flex-shrink-0 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-black text-slate-600 hover:${themeBgNotif} hover:${themeBorderNotif} transition-all uppercase tracking-tighter disabled:opacity-50`}
           >
             💰 {t.aiSuggest2}
           </button>
           <button 
             onClick={() => askAI(t.aiSuggest3)}
-            className={`flex-shrink-0 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-black text-slate-600 hover:${themeBgNotif} hover:${themeBorderNotif} transition-all uppercase tracking-tighter`}
+            disabled={loading}
+            className={`flex-shrink-0 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-black text-slate-600 hover:${themeBgNotif} hover:${themeBorderNotif} transition-all uppercase tracking-tighter disabled:opacity-50`}
           >
             ⚡ {t.aiSuggest3}
           </button>
@@ -121,18 +129,18 @@ const AICoach: React.FC<AICoachProps> = ({ userData, lang }) => {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && askAI()}
             placeholder={t.aiPlaceholder}
-            className={`w-full bg-slate-50 border-2 border-transparent ${themeBorderFocus} focus:bg-white rounded-2xl p-4 pr-12 text-sm font-medium focus:outline-none transition-all`}
+            className={`w-full bg-slate-50 border-2 border-transparent ${themeBorderFocus} focus:bg-white rounded-2xl p-4 ${lang === 'ar' ? 'pl-12' : 'pr-12'} text-sm font-medium focus:outline-none transition-all`}
           />
           <button 
             onClick={() => askAI()}
             disabled={loading || !query.trim()}
-            className={`absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 ${themeBg} text-white rounded-xl flex items-center justify-center disabled:opacity-50 active:scale-90 transition-all`}
+            className={`absolute ${lang === 'ar' ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 w-8 h-8 ${themeBg} text-white rounded-xl flex items-center justify-center disabled:opacity-50 active:scale-90 transition-all`}
           >
             {loading ? (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
             ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+              <svg className={`w-4 h-4 ${lang === 'ar' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             )}
           </button>
