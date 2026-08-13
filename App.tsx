@@ -10,7 +10,30 @@ import AdminDashboard from './components/AdminDashboard';
 import { calculateBudget } from './services/budgetService';
 import { formatCurrency, TRANSLATIONS } from './constants';
 
-const STORAGE_KEY = 'chahryti_v1_data';
+const USERS_STORAGE_KEY = 'chahryti_v1_users';
+const CURRENT_USER_KEY = 'chahryti_v1_current_user_id';
+const dataKey = (userId: string) => `chahryti_v1_data_${userId}`;
+
+const EMPTY_USER_DATA: UserData = {
+  answers: {},
+  salary: 0,
+  otherIncome: 0,
+  budgetPlan: [],
+  expenses: []
+};
+
+const loadUserData = (userId: string): UserData => {
+  try {
+    const saved = localStorage.getItem(dataKey(userId));
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && parsed.budgetPlan) return parsed;
+    }
+  } catch (e) {
+    console.error("Storage load error", e);
+  }
+  return { ...EMPTY_USER_DATA, answers: {}, budgetPlan: [], expenses: [] };
+};
 
 const MOCK_USERS: User[] = [
   {
@@ -36,28 +59,44 @@ const MOCK_USERS: User[] = [
 const App: React.FC = () => {
   const [lang, setLang] = useState<Language>('ar');
   const [step, setStep] = useState<AppStep>(AppStep.LOGIN);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [allUsers, setAllUsers] = useState<User[]>(MOCK_USERS);
+  const [allUsers, setAllUsers] = useState<User[]>(() => {
+    try {
+      const saved = localStorage.getItem(USERS_STORAGE_KEY);
+      if (saved) {
+        const extraUsers: User[] = JSON.parse(saved);
+        const merged = [...MOCK_USERS];
+        extraUsers.forEach(u => {
+          if (!merged.some(m => m.email === u.email)) merged.push(u);
+        });
+        return merged;
+      }
+    } catch (e) {
+      console.error("Users load error", e);
+    }
+    return MOCK_USERS;
+  });
+
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    try {
+      const savedId = localStorage.getItem(CURRENT_USER_KEY);
+      if (savedId) {
+        const savedUsersRaw = localStorage.getItem(USERS_STORAGE_KEY);
+        const extraUsers: User[] = savedUsersRaw ? JSON.parse(savedUsersRaw) : [];
+        const merged = [...MOCK_USERS, ...extraUsers];
+        return merged.find(u => u.id === savedId) || null;
+      }
+    } catch (e) {
+      console.error("Session load error", e);
+    }
+    return null;
+  });
+
   const [notifications, setNotifications] = useState<BudgetNotification[]>([]);
   const [loginError, setLoginError] = useState<string | null>(null);
   
   const [userData, setUserData] = useState<UserData>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.budgetPlan) return parsed;
-      }
-    } catch (e) {
-      console.error("Storage load error", e);
-    }
-    return {
-      answers: {},
-      salary: 0,
-      otherIncome: 0,
-      budgetPlan: [],
-      expenses: []
-    };
+    if (currentUser) return loadUserData(currentUser.id);
+    return { ...EMPTY_USER_DATA, answers: {}, budgetPlan: [], expenses: [] };
   });
 
   const t = TRANSLATIONS[lang] || TRANSLATIONS['fr'];
@@ -79,20 +118,35 @@ const App: React.FC = () => {
     setAllUsers(prev => reconcileSubscriptions(prev));
   }, [reconcileSubscriptions]);
 
+  // Persist the extra (non-mock) users so admin-created accounts survive a refresh
   useEffect(() => {
-    if (userData.salary > 0 || userData.expenses.length > 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
-    }
-  }, [userData]);
+    const extraUsers = allUsers.filter(u => !MOCK_USERS.some(m => m.id === u.id));
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(extraUsers));
+  }, [allUsers]);
 
-  const checkSubscription = (user: User): AppStep => {
+  // Restore the correct screen once on mount, based on the restored session (if any)
+  useEffect(() => {
+    if (currentUser) {
+      setStep(checkSubscription(currentUser, userData));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Save budget data scoped to the currently logged-in user only
+  useEffect(() => {
+    if (currentUser && (userData.salary > 0 || userData.expenses.length > 0)) {
+      localStorage.setItem(dataKey(currentUser.id), JSON.stringify(userData));
+    }
+  }, [userData, currentUser]);
+
+  const checkSubscription = (user: User, data: UserData): AppStep => {
     if (user.role === 'admin') return AppStep.ADMIN;
     const now = new Date();
     const expiry = new Date(user.subscriptionExpiry);
     if (user.subscriptionStatus !== 'active' || now > expiry) {
       return AppStep.PAUSED;
     }
-    return userData.salary > 0 ? AppStep.TRACKER : AppStep.INTRO;
+    return data.salary > 0 ? AppStep.TRACKER : AppStep.INTRO;
   };
 
   const handleLogin = (loginData: { email: string, password?: string }) => {
@@ -103,7 +157,11 @@ const App: React.FC = () => {
     }
     setLoginError(null);
     setCurrentUser(user);
-    setStep(checkSubscription(user));
+    localStorage.setItem(CURRENT_USER_KEY, user.id);
+    const freshData = loadUserData(user.id);
+    setUserData(freshData);
+    setNotifications([]);
+    setStep(checkSubscription(user, freshData));
   };
 
   const handleCreateUser = (newUser: { name: string, email: string, password: string, durationMonths: number }) => {
@@ -128,12 +186,14 @@ const App: React.FC = () => {
   const handleLogout = () => {
     setCurrentUser(null);
     setNotifications([]);
+    setUserData({ ...EMPTY_USER_DATA, answers: {}, budgetPlan: [], expenses: [] });
+    localStorage.removeItem(CURRENT_USER_KEY);
     setStep(AppStep.LOGIN);
   };
 
   const handleReset = () => {
     if (confirm(lang === 'ar' ? 'هل أنت متأكد؟ سيتم مسح كل شيء.' : 'Tout effacer ?')) {
-      localStorage.removeItem(STORAGE_KEY);
+      if (currentUser) localStorage.removeItem(dataKey(currentUser.id));
       setUserData({
           answers: {},
           salary: 0,
