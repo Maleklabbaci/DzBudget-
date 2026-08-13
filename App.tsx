@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { AppStep, UserData, BudgetCategory, Language, User, BudgetNotification, Expense } from './types';
 import Questionnaire from './components/Questionnaire';
@@ -105,6 +104,25 @@ const App: React.FC = () => {
     setLoginError(null);
     setCurrentUser(user);
     setStep(checkSubscription(user));
+  };
+
+  const handleCreateUser = (newUser: { name: string, email: string, password: string, durationMonths: number }) => {
+    if (allUsers.some(u => u.email === newUser.email)) {
+      alert(lang === 'ar' ? 'هذا البريد الإلكتروني مستخدم بالفعل' : 'Cet email est déjà utilisé');
+      return;
+    }
+    const expiry = new Date();
+    expiry.setMonth(expiry.getMonth() + newUser.durationMonths);
+    const createdUser: User = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: newUser.name,
+      email: newUser.email,
+      password: newUser.password,
+      role: 'user',
+      subscriptionStatus: 'active',
+      subscriptionExpiry: expiry.toISOString()
+    };
+    setAllUsers(prev => [...prev, createdUser]);
   };
 
   const handleLogout = () => {
@@ -249,7 +267,7 @@ const App: React.FC = () => {
             users={allUsers} 
             onUpdateUser={(id, up) => setAllUsers(prev => prev.map(u => u.id === id ? {...u, ...up} : u))} 
             onSimulateTime={() => {}} 
-            onCreateUser={() => {}}
+            onCreateUser={handleCreateUser}
           />
         )}
         
